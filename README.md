@@ -1,2 +1,2 @@
 # BioArInEO-API
-API for BioArInEO projet
+API for BioArInEO project
