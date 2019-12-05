@@ -1,0 +1,1027 @@
+#%RAML 1.0
+title: Ecyano API
+version: 0.2
+baseUri: https://api.e-cyanobacterium.org
+mediaType: application/json
+protocols: HTTPS
+types:
+  Identifier:
+    type: integer
+    minimum: 1
+    required: true
+    example: 15
+  UrlIdentifierList:
+    description: Multiple Identifiers separated by comma
+    type: string
+    required: true
+    pattern: '[0-9,]+'
+    example: 1,18,2
+  IdentifierList:
+    type: array
+    items: integer
+    uniqueItems: true
+  OptionalIdentifier:
+    type: integer
+    minimum: 1
+    required: false
+    example: 15
+  ResponseStatus:
+    type: string
+    enum: ['ok', 'error']
+  ResponseCode:
+    type: integer
+    minimum: 1
+    required: false
+    description: Same as HTTP code or custom (700+, listed in /version/errors docs) when HTTP code is 400
+  Classification:
+    properties:
+      id: Identifier
+      name:
+        type: string
+        required: true
+      type:
+        description: "On which type of object can this classification be used"
+        type: string
+        enum: ["entity", "rule"]
+        required: true
+  Organism:
+    properties:
+      id: Identifier
+      name:
+        type: string
+        required: true
+      code:
+        description: User-friendly shorter version of name
+        type: string
+        required: true
+  AbstractEntitySignature:
+    properties:
+      id: Identifier
+      name:
+        type: string
+        required: true
+        example: "complex of KaiB6 and KaiC6"
+      code:
+        description: Human-readable entity identifier, unique among all entities
+        type: string
+        required: true
+        pattern: \w+
+        example: "KaiB6C6"
+      type:
+        type: string
+        description: Entity type, can't be changed after entity is in database
+        enum: ["compartment", "complex", "structure", "atomic"]
+        required: true
+  ListEntitySignature:
+    type: AbstractEntitySignature
+    properties:
+      status: ObjectStatus
+  EntitySignature:
+    type: AbstractEntitySignature
+    properties:
+      description:
+        type: string
+        required: false
+      classifications:
+        type: IdentifierList
+        description: List of classification IDs
+      organisms:
+        type: IdentifierList
+        description: List of organism IDs
+  Compartment:
+    type: EntitySignature
+    properties:
+      parent:
+        description: Parent compartment ID
+        type: integer
+      children:
+        description: Children compartment IDs
+        type: IdentifierList
+      components:
+        description: List of Complex|Structure|Atomic entity IDs contained in this compartment
+        type: IdentifierList
+  Complex:
+    type: EntitySignature
+    properties:
+      compartments:
+        type: IdentifierList
+        description: List of compartments
+      children:
+        type: IdentifierList
+        description: List of child Structure/Atomic agents
+  Structure:
+    type: EntitySignature
+    properties:
+      parents:
+        type: IdentifierList
+        description: List of Complex parents
+      children:
+        type: IdentifierList
+        description: List of child Atomic agents
+  Atomic:
+    type: EntitySignature
+    properties:
+      parents:
+        type: IdentifierList
+        description: List of Complex or Structure parents
+      states: AtomicState[]
+  AtomicState:
+    properties:
+      code:
+        type: string
+        description: Code of state, unique among this atomic's states
+      description:
+        type: string
+  AllEntitySignature: Compartment | Complex | Structure | Atomic
+  ListRule:
+    properties:
+      id: Identifier
+      name:
+        type: string
+        description: Name of rule
+      equation:
+        type: string
+        description: Rule in BCSL
+      modifier:
+        type: string
+        description: Rule modifiers
+      status: ObjectStatus
+  Rule:
+    type: ListRule
+    properties:
+      description:
+        type: string
+        description: Rule description
+      classifications:
+        type: IdentifierList
+        description: List of classification IDs
+      organisms:
+        type: IdentifierList
+        description: List of organism IDs
+  ObjectStatus:
+    type: string
+    enum: ["new", "active"]
+  AnnotationType:
+    properties:
+      name:
+        type: string
+        description: User-friendly database name
+      code:
+        type: string
+        description: Database code to be used within API requests/responses
+  SbmlId:
+    type: string
+    descrtiption: String Identifier for SBML document
+  ModelStatus:
+    type: string
+    enum: ["new", "TBA", "active"]
+  ListModel:
+    properties:
+      id: Identifier
+      userId: Identifier
+      approvedId: OptionalIdentifier
+      name:
+        type: string
+        description: Name of the model
+      status: ModelStatus
+  Model:
+    type: ListModel
+    properties:
+      sbmlId: SbmlId
+      description: string
+      compartments:
+        type: IdentifierList
+        description: List of compartment IDs
+  ListModelCompartment:
+    properties:
+        id: Identifier
+        modelId: Identifier
+        name: string
+        spatialDimensions: integer
+        size: integer
+        isConstant: boolean
+  ModelCompartment:
+    type: ListModelCompartment
+    properties:
+      species:
+        type: IdentifierList
+        description: List of specie IDs
+      reactions:
+        type: IdentifierList
+        descripiton: List of reaction IDs
+      unitDefinitions:
+        type: IdentifierList
+        description: List of unit IDs
+  ListSpecie:
+    properties:
+      id: Identifier
+      compartmentId: Identifier
+      modelId: Identifier
+      name: string
+      equationType: string
+      initialExpression: string
+      boundaryCondition: string
+      hasOnlySubstanceUnits: boolean
+      isConstant: boolean
+  Specie:
+    type: ListSpecie
+      properties:
+        reactionItems:
+          type: IdentifierList
+          description: List of reactionItem IDs
+  ListReaction:
+    properties:
+      id: Identifier
+      modelId: Identifier
+      commpartmentId: Integer
+      name: string
+      reversible: boolean
+      fast: boolean
+  Reaction:
+    properties:
+      reactionItems:
+        type: IdentifierList
+        description: List of reactionItem IDs
+      functions:
+        type: IdentifierList
+        description: List of function IDs
+  ListFunction:
+    properties:
+      id: Identifier
+      reactionId: Identifier
+      name: string
+      formula: string
+  Function:
+    type: ListFunction
+  ListKineticLaw:
+    properties:
+      id: Identifier
+      reactionItemId: Identifier
+      equation: string
+  KineticLaw:
+    type: ListKineticLaw
+ListModel:
+    type: SBase
+    properties:
+      userId: Identifier
+      approvedId: OptionalIdentifier
+      status: ModelStatus
+      origin: ModelOrigin
+  Model:
+    type: ListModel
+    properties:
+      compartments:
+        type: IdentifierList
+        description: List of compartment IDs
+      constraints:
+        type: IdentifierList
+        description: List of constraint IDs
+      events:
+        type: IdentifierList
+        description: List of event IDs
+      functionDefinitions:
+        type: IdentifierList
+        description: List of function definition IDs
+      initialAssignments:
+        type: IdentifierList
+        description: List of initial assignment IDs
+      parameters:
+        type: IdentifierList
+        description: List of parameter IDs
+      reactions:
+        type: IdentifierList
+        description: List of reaction IDs
+      rules:
+        type: IdentifierList
+        description: List of rule IDs
+      unitDefinitions:
+        type: IdentifierList
+        description: List of unit definition IDs
+  ListModelCompartment:
+    type: SBase
+    properties:
+        modelId: Identifier
+        spatialDimensions: integer
+        size: integer
+        isConstant: boolean
+  ModelCompartment:
+    type: ListModelCompartment
+    properties:
+      species:
+        type: IdentifierList
+        description: List of specie IDs
+      reactions:
+        type: IdentifierList
+        descripiton: List of reaction IDs
+      rules:
+        type: IdentifierList
+        description: List of rule IDs
+      unitDefinitions:
+        type: IdentifierList
+        description: List of unit IDs
+  ListModelSpecie:
+    type: SBase
+    properties:
+      compartmentId: Identifier
+      modelId: Identifier
+      initialExpression: string
+      boundaryCondition: string
+      hasOnlySubstanceUnits: boolean
+      isConstant: boolean
+  ModelSpecie:
+    type: ListModelSpecie
+    properties:
+      reactionItems:
+        type: IdentifierList
+        description: List of reactionItem IDs
+      rules:
+        type: IdentifierList
+        description: List of rule IDs
+  ListModelReaction:
+    type: SBase
+    properties:
+      modelId: Identifier
+      commpartmentId: integer
+      rate: string
+      reversible: boolean
+  ModelReaction:
+    properties:
+      reactionItems:
+        type: IdentifierList
+        description: List of reactionItem IDs
+  ListModelRule:
+    type: SBase
+    properties:
+      modelId: Identifier
+      specieId: OptionalIdentifier
+      compartmentId: OptionalIdentifier
+      parameterId: OptionalIdentifier
+      ruleType: string
+      equation: string
+  ModelRule:
+    type: ListModelRule
+  ListModelConstraint:
+    type: SBase
+    properties:
+      modelId: Identifier
+      message: string
+      formula: string
+  ModelConstraint:
+    type: ListModelConstraint
+  ListModelUnit:
+    type: SBase
+    properties:
+      baseUnitId: OptionalIdentifier
+      symbol: string
+      exponent: number
+      multiplier: number
+  ModelUnit:
+    type: ListModelUnit
+    properties:
+      definitions:
+        type: IdentifierList
+        description: List of unit definition IDs
+  ListModelUnitDefinition:
+    type: SBase
+  ModelUnitDefinition:
+    type: ListModelUnitDefinition
+    properties:
+      units:
+        type: IdentifierList
+        description: List of unit IDs
+  ListModelEvent:
+    type: SBase
+    properties:
+      modelId: Identifier
+      trigger: string
+      delay: string
+      priority: string
+      evaluaterOnTrigger: integer
+  ModelEvent:
+    type: ListModelEvent
+    properties:
+      eventAssignments:
+        type: IdentifierList
+        description: List of eventAssignment IDs
+  ListModelEventAssignment:
+    type: SBase
+    properties:
+      eventId: Identifier
+      formula: string
+  ModelEventAssignment:
+    type: ListModelEventAssignment
+  ListModelInitialAssignment:
+    type: SBase
+    properties:
+      modelId: Identifier
+      formula: string
+  ModelInitialAssignment:
+    type: ListModelInitialAssignment
+  ListModelFunctionDefinition:
+    type: SBase
+    properties:
+      modelId: Identifier
+      formula: string
+  ModelFunctionDefinition:
+    type: ListModelFunctionDefinition
+  ListModelReactionItem:
+    type: SBase
+    properties:
+      reactionId: Identifier
+      specieId: OptionalIdentifier
+      parameterId: OptionalIdentifier
+      type: string
+      value: number
+      stoichiometry: number
+  ModelReactionItem:
+    type: ListModelReactionItem
+
+traits:
+  Collection:
+    description: Get all <<resourcePathName|!pluralize>>
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+              data:
+                type: array
+                items: <<type>>
+  IdCollection:
+    description: <<description>>
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+              data: IdentifierList
+  Object:
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+              data:
+                type: <<type>>
+  ObjectList:
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+              data:
+                type: array
+                items: <<type>>
+  Insert:
+    description: Inserts a new <<resourcePathName|!singularize>>
+    body:
+      application/json:
+        type: <<type>>
+      application/x-www-form-urlencoded:
+        type: <<type>>
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+              id:
+                type: Identifier
+                description: ID of inserted <<resourcePathName|!singularize>>
+      400:
+        description: Sent on bad input data
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      403:
+        description: When current access token does not have necessary privileges
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      404:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      409:
+        description: On duplicate unique key
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+              id:
+                type: Identifier
+                description: ID of already existing object
+              key:
+                type: string
+                description: Which key was duplicated
+  Update:
+    description: Updates <<resourcePathName|!singularize>>
+    body:
+      application/json:
+          type: <<type>>
+      application/x-www-form-urlencoded:
+        type: <<type>>
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      400:
+        description: Sent on bad input data
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      403:
+        description: When current access token does not have necessary privileges
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      404:
+        description: Object with given ID was not found
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+  Delete:
+    description: Removes <<resourcePathName|!singularize>>
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      403:
+        description: When current access token does not have necessary privileges
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+      404:
+        description: Object with given ID was not found
+        body:
+          application/json:
+            type: object
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+  Sortable:
+    queryParameters:
+      sort:
+        default: '[id]=asc'
+        description: |
+          query parameter array where keys are sort keys and values are direction (asc/desc),
+          possible keys: <<keys>>
+        type: string
+        required: false
+        example: 'endpoint?sort[key1]=asc&sort[key2]=desc'
+  Pageable:
+    queryParameters:
+      perPage:
+        type: integer
+        description: "Number of items per page, 0 means unlimited"
+        minimum: 0
+        default: 0
+        required: false
+      page:
+        description: "Current page"
+        type: integer
+        minimum: 1
+        default: 1
+        required: false
+    responses:
+      200:
+        headers:
+          X-Pages:
+            description: "Will contain number of pages for given perPage value (if pagination is used)"
+            type: integer
+  Limitable:
+    queryParameters:
+      take:
+        description: "How many items to return"
+        type: integer
+        minimum: 1
+      skip:
+        description: "How many items to skip"
+        type: integer
+        minimum: 0
+        default: 0
+    responses:
+      200:
+        headers:
+          X-Count:
+            description: "Will contain number of items total (if limiting is used)"
+            type: integer
+
+resourceTypes:
+  EntityList:
+    get:
+      is: [Collection: {type: <<type>>}, Sortable: {keys: 'id, name, type, code'}, Pageable, Limitable]
+      description: List of EntitySignatures of type <<type>>
+      queryParameters:
+        annotation:
+          type: string
+          description: Filter entities by annotation, format TYPE:ID, where type is one of supported annotation types
+          example: 'KEGG:CP123'
+          pattern: .+:.+
+        name:
+          type: string
+          description: Filter entities by part of name, "clever" search may be used
+  EntitySetStatus:
+    post:
+      description: Changes status of <<name>>, users may not have privileges
+      body:
+        application/json:
+          properties:
+            status: ObjectStatus
+        application/x-www-form-urlencoded:
+          properties:
+            status: ObjectStatus
+      responses:
+        200:
+          body:
+            application/json:
+              type: object
+              properties:
+                status: ResponseStatus
+                code: ResponseCode
+
+/version:
+  description: Information about API version
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            properties:
+              status: ResponseStatus
+              code: ResponseCode
+              data:
+                properties:
+                  version:
+                    type: string
+  /errors:
+    description: |
+      Any error code not listed bellow shall never be encountered by users of this API.
+      With custom error codes (700+), HTTP code will be 400 Bad Request.
+
+      List of error codes (!! INCOMPLETE !! - more will be added later, as API is under construction now):
+      [Code (Http code) - Description]
+      401 (401 Unauthorized) - Unauthorized request, will be implemented with authentication support.
+      403 (403 Forbidden)
+      404 (404 Not Found) - Requested resource was not found
+      409 (409 Conflict) - Request not allowed in current state of the resource
+      500 (500 Internal Server Error) - Server-side or application error. Please, report these!
+      700 - Attempting to access non-existing object
+      701 - When saving an object (POST, PUT methods) and some
+      702 - Invalid argument
+      703 - Invalid field specified for sort
+
+      BCS - Entity Signature errors:
+      710 - Invalid entity specified as location (must be Compartment), error details: {given: given type}
+      711 - Invalid entity specified as parent, error details: {parent: parent type, child: child type}
+
+/annotations:
+  /types:
+    description: List of valid annotation term types - databases
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              properties:
+                status: ResponseStatus
+                code: ResponseCode
+                data:
+                  type: AnnotationType[]
+  /link:
+    /{type}:
+      uriParameters:
+        type: string
+      description: Generate link to particular database from ID
+      get:
+        queryParameters:
+          id:
+            type: string
+        responses:
+          200:
+            body:
+              application/json:
+                properties:
+                  status: ResponseStatus
+                  code: ResponseCode
+                  data:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        description: URL address of object defined by parameter ID in database {type}
+
+/classifications:
+  get:
+    is: [Collection: {type: Classification}, Sortable: {keys: 'id, name'}, Pageable, Limitable]
+  post:
+    is: [Insert: {type: Classification}]
+  /{id}:
+    uriParameters:
+      id:
+        UrlIdentifierList
+    get:
+      is: [ObjectList: {type: Classification}]
+    put:
+      is: [Update: {type: Classification}]
+    delete:
+      is: [Delete]
+  /{type}:
+    uriParameters:
+      type:
+        type: string
+        enum: [entity, rule]
+
+/organisms:
+  get:
+    is: [Collection: {type: Organism}, Sortable: {keys: 'id, name, type'}, Pageable, Limitable]
+  post:
+    is: [Insert: {type: Organism}]
+  /{id}:
+    uriParameters:
+      id:
+        UrlIdentifierList
+    get:
+      is: [ObjectList: {type: Organism}]
+    put:
+      is: [Update: {type: Organism}]
+    delete:
+      is: [Delete]
+
+/entities:
+  description: Entity Signatures
+  type: {EntityList: {type: ListEntitySignature}}
+  get:
+    queryParameters:
+      sort:
+        enum: ["id", "name", "code", "type"]
+  post:
+    is: [Insert: {type: AllEntitySignature}]
+  /{id}:
+    uriParameters:
+      id:
+        type: UrlIdentifierList
+    get:
+      description: Get specific compartment
+      is: [ObjectList: {type: AllEntitySignature}]
+    put:
+      is: [Update: {type: AllEntitySignature}]
+    delete:
+      is: [Delete]
+  /{code}:
+    uriParameters:
+      code:
+        type: string
+        pattern: \w+
+        description: 'Entity code'
+    get:
+      description: Get specific entity by code
+      is: [Object: {type: AllEntitySignature}]
+  /status:
+    type: [EntitySetStatus: {name: entity}]
+#    /compartment:
+#      type: {EntityList: {type: Compartment}}
+#    /complex:
+#      type: {EntityList: {type: Complex}}
+#    /structure:
+#      type: {EntityList: {type: Structure}}
+#    /atomic:
+#      type: {EntityList: {type: Atomic}}
+
+/rules:
+  get:
+    is: [Collection: {type: ListRule}, Sortable: {keys: 'id, name, code'}, Pageable, Limitable]
+  post:
+    is: [Insert: {type: Rule}]
+  put:
+    is: [Update: {type: Rule}]
+  delete:
+    is: [Delete]
+  /{id}:
+    uriParameters:
+      id:
+        type: UrlIdentifierList
+    get:
+      is: [ObjectList: {type: Rule}]
+    /reactants:
+      get:
+        is: [IdCollection: {description: Get all products of this rule}]
+      /products:
+        get:
+          is: [IdCollection: {description: Get all products of this rule}]
+
+#BCSRepositories part follows
+
+/models:
+  get:
+     is: [Collection: {type: ListModel}, Sortable: {keys: 'id, name, userId, approvedId, status'}]
+  post:
+    is: [Insert: {type: Model}]
+  /{id}:
+    get:
+      is: [ObjectList: {type: Model}]
+    put:
+      is: [Update: {type: Model}]
+    delete:
+      is: [Delete]
+    /compartments:
+      get:
+        is: [Collection: {type: ListModelCompartment}, Sortable: {keys: 'id, name, modelId'}]
+      post:
+        is: [Insert: {type: ModelCompartment}]
+      /{id}:
+        get:
+          is: [ObjectList: {type: ModelCompartment}]
+        put:
+          is: [Update: {type: ModelCompartment}]
+        delete:
+          is: [Delete]
+        /species:
+          get:
+            is: [Collection: {type: ListModelSpecie}, Sortable: {keys: 'id, modelId'}]
+          post:
+            is: [Insert: {type: ModelSpecie}]
+          /{id}:
+            get:
+              is: [ObjectList: {type: ModelSpecie}]
+            put:
+              is: [Update: {type: ModelSpecie}]
+            delete:
+              is: [Delete]
+            /reactionItems:
+              get:
+                is: [Collection: {type: ListModelReactionItem}]
+              post:
+                  is: [Insert: {type:  ModelReactionItem}]
+              /{id}:
+                get:
+                  is: [ObjectList: {type:  ModelReactionItem}]
+                put:
+                  is: [Update: {type: ModelReactionItem}]
+                delete:
+                  is: [Delete]
+    /reactions:
+      get:
+        is: [Collection: {type: ListModelReaction}]
+      post:
+        is: [Insert: {type: ModelReaction}]
+      /{id}:
+        get:
+          is: [ObjectList: {type: ModelReaction}]
+        put:
+          is: [Update: {type: ModelReaction}]
+        delete:
+          is: [Delete]
+      /reactionItems:
+        get:
+          is: [Collection: {type: ListModelReactionItem}]
+        post:
+            is: [Insert: {type:  ModelReactionItem}]
+        /{id}:
+          get:
+            is: [ObjectList: {type: ModelReactionItem}]
+          put:
+            is: [Update: {type: ModelReactionItem}]
+          delete:
+            is: [Delete]
+    /constraints:
+      get:
+        is: [Collection: {type: ListModelConstraint}, Sortable: {keys: 'id, modelId'}]
+      post:
+        is: [Insert: {type: ModelConstraint}]
+      /{id}:
+        get:
+          is: [ObjectList: {type: ModelConstraint}]
+        put:
+          is: [Update: {type: ModelConstraint}]
+        delete:
+          is: [Delete]
+    /events:
+      get:
+        is: [Collection: {type: ListModelEvent}, Sortable: {keys: 'id, modelId'}]
+      post:
+        is: [Insert: {type: ModelEvent}]
+      /{id}:
+        get:
+          is: [ObjectList: {type: ModelEvent}]
+        put:
+          is: [Update: {type: ModelEvent}]
+        delete:
+          is: [Delete]
+      /eventAssignments:
+        get:
+          is: [Collection: {type: ListModelEventAssignment}, Sortable: {keys: 'id, modelId'}]
+        post:
+          is: [Insert: {type: ModelEventAssignment}]
+        /{id}:
+          get:
+            is: [ObjectList: {type: ModelEventAssignment}]
+          put:
+            is: [Update: {type: ModelEventAssignment}]
+          delete:
+            is: [Delete]
+    /initialAssignments:
+      get:
+        is: [Collection: {type: ListModelInitialAssignment}, Sortable: {keys: 'id, modelId'}]
+      post:
+        is: [Insert: {type: ModelInitialAssignment}]
+      /{id}:
+        get:
+         is: [ObjectList: {type: ModelInitialAssignment}]
+        put:
+          is: [Update: {type: ModelInitialAssignment}]
+        delete:
+          is: [Delete]
+    /functionDefinitions:
+      get:
+        is: [Collection: {type: ListModelFunctionDefinition}, Sortable: {keys: 'id, modelId'}]
+      post:
+        is: [Insert: {type: ModelFunctionDefinition}]
+      /{id}:
+        get:
+         is: [ObjectList: {type: ModelFunctionDefinition}]
+        put:
+          is: [Update: {type: ModelFunctionDefinition}]
+        delete:
+          is: [Delete]
+    /rules:
+      get:
+        is: [Collection: {type: ListModelRule}, Sortable: {keys: 'id, modelId'}]
+      post:
+        is: [Insert: {type:  ModelRule}]
+      /{id}:
+        get:
+          is: [ObjectList: {type:  ModelRule}]
+        put:
+          is: [Update: {type: ModelRule}]
+        delete:
+          is: [Delete]
+    /unitDefinitions:
+      get:
+        is: [Collection: {type: ListModelUnitDefinition}, Sortable: {keys: 'id, modelId'}]
+      post:
+        is: [Insert: {type: ModelUnitDefinition}]
+      /{id}:
+        get:
+          is: [ObjectList: {type: ModelUnitDefinition}]
+        put:
+          is: [Update: {type: ModelUnitDefinition}]
+        delete:
+          is: [Delete]
+/units:
+  get:
+    is: [Collection: {type: ListModelUnit}, Sortable: {keys: 'id'}]
+  post:
+    is: [Insert: {type: ModelUnit}]
+  /{id}:
+    get:
+      is: [ObjectList: {type: ModelUnit}]
+    put:
+      is: [Update: {type: ModelUnit}]
+    delete:
+      is: [Delete]
