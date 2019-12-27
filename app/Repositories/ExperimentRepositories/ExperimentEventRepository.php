@@ -48,7 +48,7 @@ class ExperimentEventRepository implements IDependentSBaseRepository
 	public function getList(array $filter, array $sort, array $limit): array
 	{
 		$query = $this->buildListQuery($filter)
-			->select('c.id, c.time, c.type, c.event');
+			->select('c.id, c.time');
 
         return $query->getQuery()->getArrayResult();
 	}
