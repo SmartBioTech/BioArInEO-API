@@ -17,8 +17,11 @@ use App\Helpers\DateTimeJson;
 class Experiment implements IdentifiedObject
 {
 
-    const STATUS_PUBLIC = 'public';
-    const STATUS_PRIVATE = 'private';
+    const PRIVACY_PUBLIC = 'public';
+    const PRIVACY_PRIVATE = 'private';
+    const STATUS_RUNNING = 'running';
+    const STATUS_FINISHED = 'finished';
+    const STATUS_FAILED = 'failed';
 
 	use EBase;
     /**
@@ -70,17 +73,29 @@ class Experiment implements IdentifiedObject
 	 */
 	//private $userId;
 
+    /**
+     * @var string
+     * @ORM\Column(type="string", columnDefinition="ENUM('private', 'public')")
+     */
+    private $privacy;
+
 	/**
 	 * @var string
-     * @ORM\Column(type="string", columnDefinition="ENUM('private', 'public')")
+     * @ORM\Column(type="string", columnDefinition="ENUM('finished', 'running', 'failed')")
 	 */
 	private $status;
 
 	/**
 	 * @var ArrayCollection
-	 * @ORM\OneToMany(targetEntity="ExperimentVariable", mappedBy="experimentId")
+	 * @ORM\OneToMany(targetEntity="ExperimentValues", mappedBy="experimentId")
 	 */
-	private $variables;
+	private $values;
+
+    /**
+     * @var ArrayCollection
+     * @ORM\OneToMany(targetEntity="ExperimentDeviceMeasure", mappedBy="experimentId")
+     */
+    private $devices;
 
 	/**
 	 * @var ArrayCollection
@@ -103,12 +118,12 @@ class Experiment implements IdentifiedObject
     private $experimentRelation;
 
     /**
-	 * @var ArrayCollection
-     * @ORM\ManyToMany(targetEntity="Device", inversedBy="experiments")
-     * @ORM\JoinTable(name="experiment_to_device", joinColumns={@ORM\JoinColumn(name="exp_id", referencedColumnName="id")},
-     * inverseJoinColumns={@ORM\JoinColumn(name="dev_id", referencedColumnName="id")})
-	 */
-	private $devices;
+     * @var ArrayCollection
+     * @ORM\ManyToMany(targetEntity="Experiment", inversedBy="experimentParent")
+     * @ORM\JoinTable(name="experiment_parented", joinColumns={@ORM\JoinColumn(name="parented_exp_id", referencedColumnName="id")},
+     * inverseJoinColumns={@ORM\JoinColumn(name="child_exp_id", referencedColumnName="id")})
+     */
+    private $experimentChildren;
 
     /**
      * @var ArrayCollection
@@ -130,7 +145,7 @@ class Experiment implements IdentifiedObject
     public function __construct()
     {
         $this->inserted = new DateTimeJson;
-        $this->devices = new ArrayCollection();
+        //$this->devices = new ArrayCollection();
         $this->protocols = new ArrayCollection();
         $this->bioquantities = new ArrayCollection();
     }
@@ -249,31 +264,6 @@ class Experiment implements IdentifiedObject
         $bioquantity->removeExperiment($this);
     }
 
-
-    /**
-     * @param Device $device
-     */
-    public function addDevice(Device $device)
-    {
-        if ($this->devices->contains($device)) {
-            return;
-        }
-        $this->devices->add($device);
-        $device->addExperiment($this);
-    }
-
-    /**
-     * @param Device $device
-     */
-    public function removeDevice(Device $device)
-    {
-        if (!$this->devices->contains($device)) {
-            return;
-        }
-        $this->devices->removeElement($device);
-        $device->removeExperiment($this);
-    }
-
     /**
      * @param  Experiment $experiment
      * @return void
@@ -295,6 +285,28 @@ class Experiment implements IdentifiedObject
         if ($this->experimentRelation->contains($experiment)) {
             $this->experimentRelation->removeElement($experiment);
             $experiment->removeExperiment($this);
+        }
+    }
+
+    /**
+     * @param  Experiment $child
+     * @return void
+     */
+    public function addChild(Experiment $child)
+    {
+        if (!$this->experimentChildren->contains($child)) {
+            $this->experimentChildren->add($child);
+        }
+    }
+
+    /**
+     * @param  Experiment $child
+     * @return void
+     */
+    public function removeChild(Experiment $child)
+    {
+        if ($this->experimentChildren->contains($child)) {
+            $this->experimentChildren->removeElement($child);
         }
     }
 
@@ -342,36 +354,67 @@ class Experiment implements IdentifiedObject
 		return $this;
 	}
 
-	/**
-	 * Get status
-	 * @return string
-	 */
-	public function getStatus(): string
-	{
-		return $this->status;
-	}
+    /**
+     * Get status
+     * @return string
+     */
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
 
-	/**
-	 * Set status
-	 * @param string $status
-	 * @return Experiment
-	 */
-	public function setStatus($status): Experiment
-	{
-        if (!in_array($status, array(self::STATUS_PUBLIC, self::STATUS_PRIVATE))) {
+    /**
+     * Set status
+     * @param string $status
+     * @return Experiment
+     */
+    public function setStatus($status): Experiment
+    {
+        if (!in_array($status, array(self::STATUS_FINISHED, self::STATUS_RUNNING, self::STATUS_FAILED))) {
             throw new \InvalidArgumentException("Invalid status");
         }
         $this->status = $status;
         return $this;
+    }
+
+	/**
+	 * Get privacy
+	 * @return string
+	 */
+	public function getPrivacy(): string
+	{
+		return $this->privacy;
 	}
 
 	/**
-	 * @return ExperimentVariable[]|Collection
+	 * Set privacy
+	 * @param string $privacy
+	 * @return Experiment
 	 */
-	public function getVariables(): Collection
+	public function setPrivacy($privacy): Experiment
 	{
-		return $this->variables;
+        if (!in_array($privacy, array(self::PRIVACY_PUBLIC, self::PRIVACY_PRIVATE))) {
+            throw new \InvalidArgumentException("Invalid privacy");
+        }
+        $this->privacy = $privacy;
+        return $this;
 	}
+
+	/**
+	 * @return ExperimentValues[]|Collection
+	 */
+	public function getValues(): Collection
+	{
+		return $this->values;
+	}
+
+    /**
+     * @return ExperimentDeviceMeasure[]|Collection
+     */
+    public function getDevicesMeasures(): Collection
+    {
+        return $this->devices;
+    }
 
     /**
      * @return Bioquantity[]|Collection
@@ -379,14 +422,6 @@ class Experiment implements IdentifiedObject
     public function getBioquantities(): Collection
     {
         return $this->bioquantities;
-    }
-
-    /**
-     * @return Device[]|Collection
-     */
-    public function getDevices(): Collection
-    {
-        return $this->devices;
     }
 
     /**
@@ -423,5 +458,13 @@ class Experiment implements IdentifiedObject
     public function getExperimentRelation(): Collection
     {
         return $this->experimentRelation;
+    }
+
+    /**
+     * @return Experiment[]|Collection
+     */
+    public function getChildren(): Collection
+    {
+        return $this->experimentChildren;
     }
 }

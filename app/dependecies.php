@@ -110,6 +110,10 @@ $c[EntityRepo\OrganismRepository::class] = function (Container $c) {
 	return new EntityRepo\OrganismRepositoryImpl($c[EntityManager::class]);
 };
 
+$c[EntityRepo\LocationRepository::class] = function (Container $c) {
+    return new EntityRepo\LocationRepository($c[EntityManager::class]);
+};
+
 $c[AuthRepo\ClientRepository::class] = function (Container $c) {
 	return new AuthRepo\ClientRepository($c[EntityManager::class]);
 };
@@ -167,8 +171,16 @@ $c[EntityRepo\BioquantityVariableRepository::class] = function (Container $c) {
     return new EntityRepo\BioquantityVariableRepository($c[EntityManager::class]);
 };
 
+$c[EntityRepo\ExperimentDeviceMeasureRepository::class] = function (Container $c) {
+    return new EntityRepo\ExperimentDeviceMeasureRepository($c[EntityManager::class]);
+};
+
 $c[EntityRepo\DeviceRepository::class] = function (Container $c) {
     return new EntityRepo\DeviceRepository($c[EntityManager::class]);
+};
+
+$c[EntityRepo\DeviceMeasureValueRepository::class] = function (Container $c) {
+    return new EntityRepo\DeviceMeasureValueRepository($c[EntityManager::class]);
 };
 
 $c[EntityRepo\UnitRepository::class] = function (Container $c) {

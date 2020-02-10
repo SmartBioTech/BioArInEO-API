@@ -114,6 +114,9 @@ return function(App $app)
 	(new RouteHelper)
 		->setRoute(Ctl\OrganismController::class, '/organisms')
 		->register();
+    (new RouteHelper)
+        ->setRoute(Ctl\LocationController::class, '/location')
+        ->register();
 	(new RouteHelper)
 		->setRoute(Ctl\ExperimentController::class, '/experiments')
 		->register();
@@ -121,11 +124,14 @@ return function(App $app)
         ->setRoute(Ctl\VariablesValuesController::class, '/experimentvalues')
         ->register();
 	(new RouteHelper)
-        ->setRoute(Ctl\ExperimentVariableController::class, '/experiments/{experiment-id:\\d+}/variables')
+		->setRoute(Ctl\ExperimentValueController::class, '/experiments/{experiment-id:\\d+}/values')
 		->register();
-	(new RouteHelper)
-		->setRoute(Ctl\ExperimentValueController::class, '/experiments/{experiment-id:\\d+}/variables/{variable-id:\\d+}/values')
-		->register();
+    (new RouteHelper)
+        ->setRoute(Ctl\ExperimentDeviceMeasureController::class, '/experiments/{experiment-id:\\d+}/devices')
+        ->register();
+    (new RouteHelper)
+        ->setRoute(Ctl\DeviceMeasureValueController::class, '/experiments/{experiment-id:\\d+}/devices/{measure-id:\\d+}/values')
+        ->register();
 	(new RouteHelper)
 		->setRoute(Ctl\ExperimentNoteController::class, '/experiments/{experiment-id:\\d+}/notes')
 		->register();
@@ -146,6 +152,9 @@ return function(App $app)
         ->register();
     (new RouteHelper)
         ->setRoute(Ctl\DeviceController::class, '/devices')
+        ->register();
+    (new RouteHelper)
+        ->setRoute(Ctl\ExperimentVariableController::class, '/variables')
         ->register();
     (new RouteHelper)
         ->setRoute(Ctl\UnitController::class, '/units')

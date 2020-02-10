@@ -36,7 +36,7 @@ class Device implements IdentifiedObject
     /**
      * Many Device have Many Experiment.
      * @ORM\ManyToMany(targetEntity="Experiment", inversedBy="devices")
-     * @ORM\JoinTable(name="experiment_to_device",  joinColumns={@ORM\JoinColumn(name="dev_id", referencedColumnName="id")},
+     * @ORM\JoinTable(name="experiment_to_device_measure",  joinColumns={@ORM\JoinColumn(name="dev_id", referencedColumnName="id")},
      * inverseJoinColumns={@ORM\JoinColumn(name="exp_id", referencedColumnName="id")})
      */
     private $experiments;

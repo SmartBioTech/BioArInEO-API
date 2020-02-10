@@ -3,18 +3,17 @@
 namespace App\Entity\Repositories;
 
 use App\Entity\Experiment;
-use App\Entity\ExperimentValues;
-use App\Entity\ExperimentVariable;
+use App\Entity\ExperimentDeviceMeasure;
 use App\Entity\IdentifiedObject;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 
-class ExperimentValueRepository implements IDependentSBaseRepository
+class ExperimentDeviceMeasureRepository implements IDependentSBaseRepository
 {
 	/** @var EntityManager * */
 	private $em;
 
-	/** @var \Doctrine\ORM\ValueRepository */
+	/** @var \Doctrine\ORM\MeasureRepository */
 	private $repository;
 
 	/** @var Experiment */
@@ -23,7 +22,7 @@ class ExperimentValueRepository implements IDependentSBaseRepository
 	public function __construct(EntityManager $em)
 	{
 		$this->em = $em;
-		$this->repository = $em->getRepository(ExperimentValues::class);
+		$this->repository = $em->getRepository(ExperimentDeviceMeasure::class);
 	}
 
 	protected static function getParentClassName(): string
@@ -33,7 +32,7 @@ class ExperimentValueRepository implements IDependentSBaseRepository
 
 	public function get(int $id)
 	{
-		return $this->em->find(ExperimentValues::class, $id);
+		return $this->em->find(ExperimentDeviceMeasure::class, $id);
 	}
 
 	public function getNumResults(array $filter): int
@@ -46,8 +45,9 @@ class ExperimentValueRepository implements IDependentSBaseRepository
 
 	public function getList(array $filter, array $sort, array $limit): array
 	{
+        //return $this->em->createQuery('SELECT IDENTITY(c.variableId) AS variable_id from Variable')->getArrayResult();
 		$query = $this->buildListQuery($filter)
-			->select('c.id, c.time, c.value, c.isAutomatic');
+			->select('c.id, c.time');
 
         return $query->getQuery()->getArrayResult();
 	}
@@ -61,14 +61,14 @@ class ExperimentValueRepository implements IDependentSBaseRepository
 	{
 		$className = static::getParentClassName();
 		if (!($object instanceof $className))
-			throw new \Exception('Parent of value must be ' . $className);
+			throw new \Exception('Parent of device measure must be ' . $className);
 		$this->experiment = $object;
 	}
 
 	private function buildListQuery(array $filter): QueryBuilder
 	{
 		$query = $this->em->createQueryBuilder()
-			->from(ExperimentValues::class, 'c')
+			->from(ExperimentDeviceMeasure::class, 'c')
             ->where('c.experimentId = :experimentId')
             ->setParameters([
                 'experimentId' => $this->experiment->getId()

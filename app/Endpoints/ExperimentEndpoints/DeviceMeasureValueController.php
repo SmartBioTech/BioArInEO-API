@@ -2,8 +2,14 @@
 
 namespace App\Controllers;
 
-use App\Entity\{ExperimentValues,
+use App\Entity\{DeviceMeasureValue,
+    ExperimentDeviceMeasure,
+    ExperimentValues,
+    ExperimentVariable,
+    Experiment,
     IdentifiedObject,
+    Repositories\DeviceMeasureValueRepository,
+    Repositories\ExperimentDeviceMeasureRepository,
     Repositories\IEndpointRepository,
     Repositories\ExperimentRepository,
     Repositories\ExperimentVariableRepository,
@@ -23,13 +29,13 @@ use Slim\Http\{
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * @property-read ExperimentValueRepository $repository
- * @method ExperimentValues getObject(int $id, IEndpointRepository $repository = null, string $objectName = null)
+ * @property-read DeviceMeasureValueRepository $repository
+ * @method DeviceMeasureValue getObject(int $id, IEndpointRepository $repository = null, string $objectName = null)
  */
-final class ExperimentValueController extends ParentedRepositoryController
+final class DeviceMeasureValueController extends ParentedRepositoryController
 {
 
-	/** @var ExperimentValueRepository */
+	/** @var DeviceMeasureValueRepository */
 	private $valueRepository;
     private $variableRepository;
     private $unitRepository;
@@ -37,38 +43,34 @@ final class ExperimentValueController extends ParentedRepositoryController
 	public function __construct(Container $c)
 	{
 		parent::__construct($c);
-		$this->valueRepository = $c->get(ExperimentValueRepository::class);
+        $this->valueRepository = $c->get(ExperimentValueRepository::class);
         $this->variableRepository = $c->get(ExperimentVariableRepository::class);
         $this->unitRepository = $c->get(UnitRepository::class);
 	}
 
 	protected static function getAllowedSort(): array
 	{
-		return ['id', 'time', 'value'];
+		return ['id', 'value', 'variableId', 'unitId'];
 	}
 
 
 	protected function getData(IdentifiedObject $value): array
 	{
-		/** @var ExperimentValues $value */
+		/** @var DeviceMeasureValue $value */
 		return [
             'variable' => ['id' => $value->getVariableId()->getId(), 'name' => $value->getVariableId()->getName()],
             'unit' => ['id' => $value->getUnitId()->getId(), 'name' => $value->getUnitId()->getName()],
-			'time' => $value->getTime(),
 			'value' => $value->getValue(),
-            'isAutomatic' => $value->getIsAutomatic(),
 		];
 	}
 
 	protected function setData(IdentifiedObject $value, ArgumentParser $data): void
 	{
-		/** @var ExperimentValues $value */
-		$value->getExperimentId() ?: $value->setExperimentId($this->repository->getParent());
+		/** @var DeviceMeasureValue $value */
+		$value->getMeasureId() ?: $value->setMeasureId($this->repository->getParent());
         !$data->hasKey('variableId') ?: $value->setVariableId($this->variableRepository->get($data->getInt('variableId')));
         !$data->hasKey('unitId') ?: $value->setUnitId($this->unitRepository->get($data->getInt('unitId')));
-		!$data->hasKey('time') ?: $value->setTime($data->getFloat('time'));
 		!$data->hasKey('value') ?: $value->setValue($data->getFloat('value'));
-        !$data->hasKey('isAutomatic') ?: $value->setIsAutomatic($data->getBool('isAutomatic'));
 	}
 
 	protected function createObject(ArgumentParser $body): IdentifiedObject
@@ -77,26 +79,18 @@ final class ExperimentValueController extends ParentedRepositoryController
             throw new MissingRequiredKeyException('variableId');
         if (!$body->hasKey('unitId'))
             throw new MissingRequiredKeyException('unitId');
-		if (!$body->hasKey('time'))
-			throw new MissingRequiredKeyException('time');
 		if (!$body->hasKey('value'))
 			throw new MissingRequiredKeyException('value');
-        if (!$body->hasKey('isAutomatic'))
-            throw new MissingRequiredKeyException('isAutomatic');
-		return new ExperimentValues;
+		return new DeviceMeasureValue();
 	}
 
 	protected function checkInsertObject(IdentifiedObject $value): void
 	{
-		/** @var ExperimentValues $value */
-		/*if ($value->getExperimentId() === null)
-			throw new MissingRequiredKeyException('experimentId');*/
+		/** @var DeviceMeasureValue $value */
 		if ($value->getVariableId() === null)
 			throw new MissingRequiredKeyException('variableId');
         if ($value->getUnitId() === null)
             throw new MissingRequiredKeyException('unitId');
-		if ($value->getTime() === null)
-			throw new MissingRequiredKeyException('time');
 		if ($value->getValue() === null)
 			throw new MissingRequiredKeyException('value');
 	}
@@ -124,16 +118,16 @@ final class ExperimentValueController extends ParentedRepositoryController
 
 	protected static function getRepositoryClassName(): string
 	{
-		return ExperimentValueRepository::Class;
+		return DeviceMeasureValueRepository::Class;
 	}
 
 	protected static function getParentRepositoryClassName(): string
 	{
-		return ExperimentRepository::class;
+		return ExperimentDeviceMeasureRepository::class;
 	}
 
 	protected function getParentObjectInfo(): array
 	{
-		return ['experiment-id', 'experiment'];
+		return ['measure-id', 'measure'];
 	}
 }

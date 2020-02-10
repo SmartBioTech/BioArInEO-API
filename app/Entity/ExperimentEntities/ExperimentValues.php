@@ -27,11 +27,23 @@ class ExperimentValues implements IdentifiedObject
 {
 	use EBase;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="Experiment", inversedBy="values")
+     * @ORM\JoinColumn(name="exp_id", referencedColumnName="id")
+     */
+    protected $experimentId;
+
 	/**
 	 * @ORM\ManyToOne(targetEntity="ExperimentVariable", inversedBy="values")
 	 * @ORM\JoinColumn(name="var_id", referencedColumnName="id")
 	 */
 	protected $variableId;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="Unit")
+     * @ORM\JoinColumn(name="unit_id", referencedColumnName="id")
+     */
+    protected $unitId;
 
 	/**
 	 * @var float
@@ -62,9 +74,9 @@ class ExperimentValues implements IdentifiedObject
 
     /**
      * Get experimentId
-     * @return integer
+     * @return Experiment/null
      */
-    public function getExperimentId()
+    public function getExperimentId(): ?Experiment
     {
         return $this->experimentId;
     }
@@ -80,11 +92,31 @@ class ExperimentValues implements IdentifiedObject
         return $this;
     }
 
+    /**
+     * Get unitId
+     * @return Unit/null
+     */
+    public function getUnitId(): ?Unit
+    {
+        return $this->unitId;
+    }
+
+    /**
+     * Set unitId
+     * @param integer $unitId
+     * @return ExperimentValues
+     */
+    public function setUnitId($unitId): ExperimentValues
+    {
+        $this->unitId = $unitId;
+        return $this;
+    }
+
 	/**
 	 * Get variableId
-	 * @return integer|null
+	 * @return ExperimentVariable
 	 */
-	public function getVariableId()
+	public function getVariableId(): ?ExperimentVariable
 	{
 		return $this->variableId;
 	}

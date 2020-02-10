@@ -8,25 +8,12 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity
- * @ORM\Table(name="experiment_variable")
+ * @ORM\Table(name="variable")
  * @ORM\DiscriminatorColumn(name="hierarchy_type", type="string")
  */
 class ExperimentVariable implements IdentifiedObject
 {
 	use EBase;
-
-	/**
-	 * @ORM\ManyToOne(targetEntity="Experiment", inversedBy="variables")
-	 * @ORM\JoinColumn(name="exp_id", referencedColumnName="id")
-	 */
-	protected $experimentId;
-
-	/**
-	 * @ORM\ManyToOne(targetEntity="Unit")
-	 * @ORM\JoinColumn(name="unit_id", referencedColumnName="id")
-	 */
-	protected $unitId;
-
 
 	/**
 	 * @var string
@@ -72,46 +59,6 @@ class ExperimentVariable implements IdentifiedObject
 	{
 		return $this->id;
 	}
-	
-	/**
-	 * Get experimentId
-	 * @return integer
-	 */
-	public function getExperimentId()
-	{
-		return $this->experimentId;
-	}
-
-	/**
-	 * Set experimentId
-	 * @param integer $experimentId
-	 * @return ExperimentVariable
-	 */
-	public function setExperimentId($experimentId): ExperimentVariable
-	{
-		$this->experimentId = $experimentId;
-		return $this;
-	}
-
-    /**
-     * Get unitId
-     * @return Unit
-     */
-    public function getUnitId()
-    {
-        return $this->unitId;
-    }
-
-    /**
-     * Set unitId
-     * @param integer $unitId
-     * @return ExperimentVariable
-     */
-    public function setUnitId($unitId): ExperimentVariable
-    {
-        $this->unitId = $unitId;
-        return $this;
-    }
 
 
 	/**

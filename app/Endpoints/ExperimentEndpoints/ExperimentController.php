@@ -4,13 +4,11 @@ namespace App\Controllers;
 
 use App\Entity\{Bioquantity,
     Experiment,
+    ExperimentDeviceMeasure,
     ExperimentEvent,
+    ExperimentValues,
     IdentifiedObject,
-    ExperimentVariable,
     ExperimentNote,
-    Device,
-    Model,
-    Protocol,
     Repositories\BioquantityRepository,
     Repositories\DeviceRepository,
     Repositories\ExperimentEventRepository,
@@ -18,12 +16,14 @@ use App\Entity\{Bioquantity,
     Repositories\ExperimentRepository,
     Repositories\ModelRepository,
     Repositories\OrganismRepository,
-    Repositories\ProtocolRepository};
+    Repositories\ProtocolRepository,
+    Repositories\UnitRepository};
 use App\Exceptions\{
 	DependentResourcesBoundException,
 	MissingRequiredKeyException
 };
 use App\Helpers\ArgumentParser;
+use DoctrineProxies\__CG__\App\Entity\Model;
 use Slim\Container;
 use Slim\Http\{
 	Request, Response
@@ -43,6 +43,7 @@ final class ExperimentController extends WritableRepositoryController
     private $bioquantityRepository;
     private $protocolRepository;
     private $eventRepository;
+    private $unitRepository;
 
     public function __construct(Container $c)
 	{
@@ -53,6 +54,7 @@ final class ExperimentController extends WritableRepositoryController
         $this->deviceRepository = $c->get(DeviceRepository::class);
         $this->protocolRepository = $c->get(ProtocolRepository::class);
         $this->eventRepository = $c->get(ExperimentEventRepository::class);
+        $this->unitRepository = $c->get(UnitRepository::class);
 	}
 
 	protected static function getAllowedSort(): array
@@ -73,9 +75,13 @@ final class ExperimentController extends WritableRepositoryController
                 'inserted' => $experiment->getInserted(),
                 'started' => $experiment->getStarted(),
                 'status' => (string)$experiment->getStatus(),
+                'privacy' => (string)$experiment->getPrivacy(),
                 'organism' => $experiment->getOrganismId()!= null ? OrganismController::getData($experiment->getOrganismId()):null,
-                'variables' => $experiment->getVariables()->map(function (ExperimentVariable $variable) {
-                    return ['id' => $variable->getId(), 'name' => $variable->getName(), 'code' => $variable->getCode(), 'type' => $variable->getType()];
+                'childrenExperiments' => $experiment->getChildren()->map(function (Experiment $children) {
+                    return ['id' => $children->getId(), 'name' => $children->getName()];
+                })->toArray(),
+                'values' => $experiment->getValues()->map(function (ExperimentValues $value) {
+                    return ['id' => $value->getId(),  'variable' => ['id' => $value->getVariableId()->getId(), 'name' => $value->getVariableId()->getName()],'unit' => $value->getUnitId()!= null ? UnitController::getData($value->getUnitId()):null,'time' => $value->getTime(), 'value' => $value->getValue()];
                 })->toArray(),
                 'notes' => $experiment->getNote()->map(function (ExperimentNote $note) {
                     return ['id' => $note->getId(), 'note' => $note->getNote()];
@@ -86,8 +92,8 @@ final class ExperimentController extends WritableRepositoryController
                 'bioquantities' => $experiment->getBioquantities()->map(function (Bioquantity $bioquantity) {
                     return ['id' => $bioquantity->getId(), 'name' => $bioquantity->getName(), 'description' => $bioquantity->getDescription()];
                 })->toArray(),
-                'devices' => $experiment->getDevices()->map(function (Device $device) {
-                      return ['id' => $device->getId(), 'name' => $device->getName(), 'address' => $device->getAddress()];
+                'devices' => $experiment->getDevicesMeasures()->map(function (ExperimentDeviceMeasure $device) {
+                      return ['id' => $device->getId(), 'name' => $device->getDeviceId()->getName(), 'type' => $device->getDeviceId()->getType(), 'address' => $device->getDeviceId()->getAddress()];
                 })->toArray(),
                 'events' => $experiment->getEvent()->map(function (ExperimentEvent $event){
                     return[$event->getId() != null ? ExperimentEventController::getData($this->eventRepository->get($event->getId())):null];

@@ -38,7 +38,7 @@ class ExperimentRepository implements IEndpointRepository
 	{
 	    //$this->em->getRepository(Experiment)->findAll();
 		$query = $this->buildListQuery($filter)
-			->select('e.id, e.name, e.description, e.started, e.inserted, e.status');
+			->select('e.id, e.name, e.description, e.started, e.inserted, e.status, e.privacy');
 		return $query->getQuery()->getArrayResult();
 	}
 
