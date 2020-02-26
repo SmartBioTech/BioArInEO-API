@@ -1,7 +1,7 @@
 # Deploy
 ## Prepare api directory
- 1) in directory /var/www execute sudo git clone https://github.com/CzechGlobe-DoAB/BioArInEO-API.git
- 2) in directory /var/www/BioArInEO-API create writeable dirs cache/proxies and logs
+ 1) in directory ``/var/www`` execute sudo git clone https://github.com/CzechGlobe-DoAB/BioArInEO-API.git
+ 2) in directory ``/var/www/BioArInEO-API`` create writeable dirs cache/proxies and logs
  3) set database connection in /var/www/BioArInEO-API/app/settings.local.php
  4) execute sudo composer install (/var/www/BioArInEO-API/app)
 ## Set Virtual-Host
